@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Happy Halloween — Candy Wheel</title>
+  <style>
+    :root{
+      --bg-1: #06061a;
+      --bg-2: #1b0720;
+      --accent: #ffb84d;
+      --muted: #cfc7d1;
+    }
+  html,body{height:100%;overflow:hidden;}
+  body{margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color:#fff; display:flex; align-items:center; justify-content:center;position:relative;background:radial-gradient(600px 300px at 10% 10%, rgba(255,255,255,0.02), transparent 20%), linear-gradient(180deg,var(--bg-1), var(--bg-2));}
+    
+    /* Video background */
+    .video-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      object-fit: cover;
+      filter: brightness(0.6);
+    }
+
+    .stage{width:100%;max-width:1100px;padding:28px; box-sizing:border-box;position:relative;z-index:1;}
+    header{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:18px}
+    h1{margin:0;font-size:44px;letter-spacing:1px;text-shadow:0 6px 16px rgba(0,0,0,0.6);}
+    p.lead{margin:0;color:var(--muted)}
+
+  .main{display:flex;gap:28px;align-items:flex-start;justify-content:flex-end;padding-right:24px}
+  .wheel-column{display:flex;flex-direction:column;align-items:center;gap:12px}
+
+    /* wheel container */
+    .wheel-area{position:relative;width:560px;height:560px;display:flex;align-items:center;justify-content:center}
+    .wheel{width:520px;height:520px;border-radius:50%;position:relative;overflow:visible;box-shadow:0 20px 60px rgba(0,0,0,0.7), inset 0 -14px 30px rgba(0,0,0,0.5);background:conic-gradient(#2d223f 0 72deg,#5a2230 72deg 144deg,#5a5a21 144deg 216deg,#2a5a36 216deg 288deg,#5a2a5a 288deg 360deg);transition:transform 4s cubic-bezier(.2,.9,.25,1)}
+    .wheel .hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #ffdca8,#ffb86b);display:flex;align-items:center;justify-content:center;font-weight:800;color:#2b160d}
+
+    /* pointer at top of wheel rim pointing down like an elevator key */
+    .pointer{position:absolute;width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-top:34px solid var(--accent);filter:drop-shadow(0 6px 14px rgba(0,0,0,0.5));z-index:40;pointer-events:none;transform:translateY(-50%)}
+
+    /* slice labels: positioned by JS into center of each slice. they are circular groups that blend with the wheel */
+    .slice-label{position:absolute;left:50%;top:50%;transform-origin:center;display:flex;align-items:center;justify-content:center}
+    .candy-bubble{background:rgba(0,0,0,0.14);backdrop-filter: blur(4px);padding:6px 8px;border-radius:12px;color:#fff;font-weight:700;display:inline-flex;gap:6px;align-items:center}
+    .candy-bubble img{width:26px;height:26px;display:block}
+
+    /* controls */
+    .controls{display:flex;flex-direction:column;gap:12px;align-items:center}
+    .spin-btn{background:linear-gradient(180deg,#ffb84d,#ff8a3d);border:0;padding:14px 22px;border-radius:12px;font-weight:800;color:#2b160d;cursor:pointer;box-shadow:0 10px 30px rgba(255,136,61,0.16);}
+    .hint{color:var(--muted);font-size:14px}
+
+
+   /* modal */
+   /* give the modal a very high z-index so it always appears above the wheel (which uses transforms)
+     transformed elements can create stacking contexts that otherwise overlap fixed elements */
+   .modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);opacity:0;pointer-events:none;transition:opacity 200ms;z-index:99999}
+    .modal.show{opacity:1;pointer-events:auto}
+    .modal-card{background:linear-gradient(180deg,#301020,#1a0711);padding:18px 22px;border-radius:12px;color:#fff;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,0.6)}
+
+    /* small responsive tweaks */
+    @media (max-width:840px){ .wheel-area{width:420px;height:420px} .wheel{width:380px;height:380px} h1{font-size:34px} }
+  </style>
+</head>
+<body>
+  <video id="bgVideo" class="video-background" autoplay loop muted playsinline poster="poster.jpg">
+    <source src="halloween_hand_for_ani.mp4" type="video/mp4">
+    <source src="halloween_hand_for_ani.mov" type="video/quicktime">
+    <!-- Fallback text for unsupported browsers -->
+  </video>
+  
+  <div class="stage">
+    <header>
+      <h1>Happy Halloween</h1>
+      <p class="lead">Spin the Trick-or-Treat wheel — win 1 to 5 candies!</p>
+    </header>
+
+    <div class="main">
+      <div class="wheel-column">
+        <div class="wheel-area">
+          <div id="pointer" class="pointer" aria-hidden="true"></div>
+          <div id="wheel" class="wheel" role="application" aria-label="Trick or Treat Wheel">
+            <div class="hub">TRICK<br/>TREAT</div>
+            <!-- slice labels will be inserted by JS into correct positions -->
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="spinBtn" class="spin-btn">Spin</button>
+          <div class="hint">Swipe the wheel with your finger (or drag) to fling it.</div>
+          <div id="status" class="hint"></div>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+
+  <div id="modal" class="modal" role="dialog" aria-hidden="true">
+    <div class="modal-card">
+      <div style="font-size:18px;color:#ffdca8;font-weight:800">Congratulations!</div>
+      <div id="modal-msg" style="margin-top:8px;font-size:20px;font-weight:700">You won 0 candies</div>
+      <div style="margin-top:12px"><button id="okBtn" class="spin-btn">Yay!</button></div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const wheel = document.getElementById('wheel');
+    const pointer = document.getElementById('pointer');
+    const spinBtn = document.getElementById('spinBtn');
+    const status = document.getElementById('status');
+    const modal = document.getElementById('modal');
+    const modalMsg = document.getElementById('modal-msg');
+    const okBtn = document.getElementById('okBtn');
+
+    const sectors = 5;
+    const sectorAngle = 360 / sectors; // 72
+
+    // define slices: each has count and an image (we'll use emoji converted to data URI)
+    const slices = [
+      {count:1, icon:'🍬'},
+      {count:2, icon:'🍭'},
+      {count:3, icon:'🍫'},
+      {count:4, icon:'🍪'},
+      {count:5, icon:'🍬'}
+    ];
+
+    let spinning = false;
+    let currentRotation = 0;
+
+    // Helper: create a label element for a slice showing count of candies
+    function makeLabel(i){
+      const el = document.createElement('div');
+      el.className = 'slice-label';
+      el.dataset.value = (i+1);
+      const bubble = document.createElement('div');
+      bubble.className = 'candy-bubble';
+      // create small images for the count (clamped to 5)
+      const c = Math.min(slices[i].count,5);
+      for(let k=0;k<c;k++){
+        const img = document.createElement('span');
+        img.textContent = slices[i].icon;
+        img.style.fontSize = '20px';
+        bubble.appendChild(img);
+      }
+      el.appendChild(bubble);
+      wheel.appendChild(el);
+      return el;
+    }
+
+    // place labels at center of each slice and ensure they stay within slice arc
+    function positionLabels(){
+      const rect = wheel.getBoundingClientRect();
+      const radius = Math.min(rect.width, rect.height)/2 - 120; // closer to center
+      const labels = [];
+      // ensure labels exist
+      if(!wheel.querySelector('.slice-label')){
+        for(let i=0;i<sectors;i++) makeLabel(i);
+      }
+      wheel.querySelectorAll('.slice-label').forEach(lbl=>{
+        const v = Number(lbl.dataset.value) - 1;
+        const angleDeg = (v * sectorAngle) + sectorAngle/2; // center of slice
+        // convert to CSS rotation: rotate around wheel center, then push outward
+        const angle = angleDeg - 90; // make 0 at top
+        lbl.style.transform = `translate(-50%,-50%) rotate(${angle}deg) translateY(-${radius}px) rotate(${-angle}deg)`;
+        // set max width based on arc length to avoid overflow
+        const arc = 2 * Math.PI * radius * (sectorAngle/360);
+        const bubble = lbl.querySelector('.candy-bubble');
+        bubble.style.maxWidth = Math.max(24, arc - 12) + 'px';
+        bubble.style.overflow = 'hidden';
+        bubble.style.whiteSpace = 'nowrap';
+      });
+    }
+
+    // pointer position: centered at top of wheel pointing down like elevator key
+    // Use pointerYOffset to nudge the pointer up/down for visual alignment (negative = up)
+    const pointerYOffset = -8; // tweak this value (px) if you want the tip closer/further from rim
+    function positionPointer(){
+      const rect = wheel.getBoundingClientRect();
+      const wrap = wheel.parentElement.getBoundingClientRect();
+      const cx = (rect.left - wrap.left) + rect.width/2;
+      pointer.style.left = cx + 'px';
+      pointer.style.top = (rect.top - wrap.top + pointerYOffset) + 'px';
+    }
+
+    // equal probability spin: pick random slice 1..5 uniformly
+    function pickRandom(){ return Math.floor(Math.random()*sectors) + 1 }
+
+    function doSpin(result, extraSpins){
+      if(spinning) return;
+      spinning = true;
+      spinBtn.disabled = true;
+      status.textContent = 'Spinning...';
+      // compute center angle for the slice (0-based)
+      const centerAngle = (result - 1) * sectorAngle + sectorAngle/2;
+      // pointer sits at 180deg; compute offset to bring centerAngle to 180
+      const desired = 180;
+      let offset = desired - centerAngle;
+      offset = ((offset % 360) + 360) % 360;
+      const spins = extraSpins || (Math.floor(Math.random()*3) + 4); // 4..6
+      const target = spins*360 + offset;
+      currentRotation += target;
+      wheel.style.transition = 'transform 3.6s cubic-bezier(.2,.9,.25,1)';
+      wheel.style.transform = `rotate(${currentRotation}deg)`;
+      wheel.dataset.result = result;
+    }
+
+    // show result modal
+    function showResult(n){
+      modalMsg.textContent = `You won ${n} ${n===1? 'candy' : 'candies'}!`;
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden','false');
+      status.textContent = `You got ${n}`;
+      spinning = false;
+      spinBtn.disabled = false;
+    }
+
+    // after wheel transition end, reveal result
+    wheel.addEventListener('transitionend', (ev)=>{
+      if(ev.propertyName !== 'transform') return;
+      const r = Number(wheel.dataset.result || 0);
+      if(r >=1 && r <= sectors) setTimeout(()=> showResult(r), 180);
+    });
+
+    // click button triggers a fair spin
+    spinBtn.addEventListener('click', ()=>{ const r = pickRandom(); doSpin(r); });
+
+    okBtn.addEventListener('click', ()=>{ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); });
+
+    // Swipe / drag support: we accept a flick to trigger a spin
+    let pointerDown = false; let startY=0, startX=0, startTime=0;
+    wheel.addEventListener('pointerdown', (e)=>{
+      if(spinning) return; pointerDown=true; startX=e.clientX; startY=e.clientY; startTime=Date.now(); wheel.setPointerCapture(e.pointerId);
+      // stop any transition so user can drag
+      wheel.style.transition = 'none';
+    });
+    wheel.addEventListener('pointermove',(e)=>{
+      if(!pointerDown) return; const dx = e.clientX - startX; const dy = e.clientY - startY; // gentle rotate while dragging
+      const rot = dx * 0.3; wheel.style.transform = `rotate(${currentRotation + rot}deg)`;
+    });
+    wheel.addEventListener('pointerup',(e)=>{
+      if(!pointerDown) return; pointerDown=false; const dx = e.clientX - startX; const dt = Math.max(16, Date.now()-startTime);
+      const velocity = dx / dt; // px per ms
+      // treat any significant flick as a spin; still pick random result fairly
+      const flickStrength = Math.min(Math.abs(velocity)*200, 1800);
+      const spins = Math.floor(2 + Math.abs(velocity)*5);
+      const r = pickRandom();
+      doSpin(r, spins + 3);
+    });
+
+    // Initial layout
+    function init(){ positionLabels(); positionPointer(); }
+    window.addEventListener('load', init);
+    window.addEventListener('resize', ()=>{ positionLabels(); positionPointer(); });
+
+    // accessibility: keyboard spin
+    window.addEventListener('keydown', (e)=>{ if(e.key === ' ' || e.key === 'Enter'){ spinBtn.click(); }});
+
+    // Video background compatibility: if the .mov can't play, fall back to the page gradient.
+    try{
+      const bgVideo = document.getElementById('bgVideo');
+      if(bgVideo){
+        // If video canplay, nothing to do. If there's an error, hide video and keep gradient background.
+        bgVideo.addEventListener('canplay', ()=>{
+          // make sure it's behind content
+          bgVideo.style.display = '';
+        });
+        bgVideo.addEventListener('error', (ev)=>{
+          bgVideo.style.display = 'none';
+          // explicit fallback background (uses CSS variables)
+          document.body.style.background = 'radial-gradient(600px 300px at 10% 10%, rgba(255,255,255,0.02), transparent 20%), linear-gradient(180deg,var(--bg-1), var(--bg-2))';
+          if(status) status.textContent = 'Video not playable — using fallback background';
+        });
+        // try to play (some browsers block autoplay even when muted)
+        bgVideo.play().catch(()=>{
+          // if blocked, keep muted and show fallback background so page isn't white
+          document.body.style.background = 'radial-gradient(600px 300px at 10% 10%, rgba(255,255,255,0.02), transparent 20%), linear-gradient(180deg,var(--bg-1), var(--bg-2))';
+          if(status) status.textContent = 'Autoplay blocked; tap to play the background video';
+        });
+      }
+    }catch(e){
+      // ignore
+    }
+
+  })();
+  </script>
+</body>
+</html>
