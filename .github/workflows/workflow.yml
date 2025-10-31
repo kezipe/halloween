@@ -7,15 +7,14 @@ on:
 
 jobs:
   deploy:
-    name: Transfer
     runs-on: ubuntu-22.04
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Create tarball excluding .git and .github
-        run: tar --exclude='.git' --exclude='.github' --ignore-failed-read -czf ../app.tar.gz .
+      - name: Create tarball from current HEAD (no .git)
+        run: |
+          git archive --format=tar HEAD | gzip > repo.tar.gz
 
       - name: Upload tarball
         uses: appleboy/scp-action@v0.1.7
@@ -23,17 +22,17 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "../app.tar.gz"
+          source: "repo.tar.gz"
           target: "~/halloween/"
+          overwrite: true
 
-      - name: Extract on remote
-        uses: appleboy/ssh-action@v1.0.0
+      - name: Extract on server and cleanup
+        uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             mkdir -p ~/halloween
-            cd ~/halloween
-            tar -xzf app.tar.gz
-            rm app.tar.gz
+            tar -xzf ~/halloween/repo.tar.gz -C ~/halloween
+            rm ~/halloween/repo.tar.gz
