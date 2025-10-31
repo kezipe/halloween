@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Create tarball excluding .git and .github
-        run: tar --exclude='.git' --exclude='.github' -czf app.tar.gz .
+        run: tar --exclude='.git' --exclude='.github' --ignore-failed-read -czf app.tar.gz .
 
       - name: Upload tarball
         uses: appleboy/scp-action@v0.1.7
@@ -33,6 +33,7 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            mkdir -p ~/halloween
             cd ~/halloween
             tar -xzf app.tar.gz
             rm app.tar.gz
