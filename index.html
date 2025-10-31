@@ -62,11 +62,15 @@
   .cookie-jar{
     width: 64px;
     height: 64px;
-    background-image: url('wheel_transparent.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
+  }
+  .cookie-jar img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
   .jar-fill{
     display: flex;
@@ -176,6 +180,12 @@
       // Create div for the wheel image
       const jar = document.createElement('div');
       jar.className = 'cookie-jar';
+      
+      // Add image element instead of using background-image
+      const img = document.createElement('img');
+      img.src = 'wheel_transparent.png';
+      img.alt = 'Candy jar';
+      jar.appendChild(img);
 
       const fill = document.createElement('div');
       fill.className = 'jar-fill';
