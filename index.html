@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Happy Halloween — Candy Wheel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg-1: #06061a;
@@ -27,11 +28,50 @@
     }
 
     .stage{width:100%;max-width:1100px;padding:28px; box-sizing:border-box;position:relative;z-index:1;}
-    header{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:18px}
-    h1{margin:0;font-size:44px;letter-spacing:1px;text-shadow:0 6px 16px rgba(0,0,0,0.6);}
-    p.lead{margin:0;color:var(--muted)}
-
-  .main{display:flex;gap:28px;align-items:flex-start;justify-content:flex-end;padding-right:24px}
+    header{display:flex;flex-direction:column;align-items:center;gap:6px;margin:80px 0 18px 0}
+    h1{
+      margin:0;
+      font-family: 'Creepster', cursive;
+      font-size: 64px;
+      letter-spacing: 2px;
+      text-shadow: 
+        0 0 10px rgba(255,166,0,0.5),
+        0 0 20px rgba(255,88,0,0.4),
+        0 6px 16px rgba(0,0,0,0.8);
+      color: #ff6200;
+      transform: rotate(-2deg);
+      animation: spookyFloat 3s ease-in-out infinite;
+    }
+    @keyframes spookyFloat {
+      0%, 100% { transform: rotate(-2deg) translateY(0); }
+      50% { transform: rotate(-1deg) translateY(-5px); }
+    }
+    @keyframes flickerGlow {
+      0%, 100% { text-shadow: 0 0 8px rgba(255,184,77,0.8); }
+      50% { text-shadow: 0 0 12px rgba(255,184,77,0.4); }
+    }
+    p.lead{
+      margin: 8px 0 0 0;
+      color: var(--accent);
+      font-family: 'Creepster', cursive;
+      font-size: 24px;
+      letter-spacing: 1px;
+      animation: flickerGlow 2s ease-in-out infinite;
+      text-align: center;
+      max-width: 400px;
+      line-height: 1.3;
+    }
+    .main {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding-left: 24px;
+  padding-right: 0;
+  margin-left: -170px; /* Push even further left */
+  margin-top: -120px;
+}
+  /* .main{display:flex;gap:28px;align-items:flex-start;justify-content:flex-end;padding-right:24px} */
   .wheel-column{display:flex;flex-direction:column;align-items:center;gap:12px}
 
     /* wheel container */
@@ -40,13 +80,44 @@
     .wheel .hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #ffdca8,#ffb86b);display:flex;align-items:center;justify-content:center;font-weight:800;color:#2b160d}
 
     /* pointer at top of wheel rim pointing down like an elevator key */
-    .pointer{position:absolute;width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-top:34px solid var(--accent);filter:drop-shadow(0 6px 14px rgba(0,0,0,0.5));z-index:40;pointer-events:none;transform:translateY(-50%)}
+    .pointer{
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-top: 34px solid var(--accent);
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5));
+      z-index: 40;
+      pointer-events: none;
+      transform: translateX(-50%);
+      top: 0;
+    }
 
     /* slice labels: positioned by JS into center of each slice. they are circular groups that blend with the wheel */
-  .slice-label{position:absolute;left:50%;top:50%;transform-origin:center;display:flex;align-items:center;justify-content:center}
+  .slice-label{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform-origin:center;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition: filter 0.3s ease-out;
+  }
+  .slice-label.winner .candy-bubble {
+    background: rgba(255, 215, 0, 0.3);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    backdrop-filter: blur(4px) brightness(1.2);
+  }
+  .slice-label.winner {
+    filter: brightness(1.3);
+    z-index: 10;
+  }
   /* candy bubble containing a cookie jar graphic */
   .candy-bubble{
     background:rgba(0,0,0,0.14);
+    transition: all 0.3s ease-out;
     backdrop-filter: blur(4px);
     padding:6px;
     border-radius:12px;
@@ -62,15 +133,11 @@
   .cookie-jar{
     width: 64px;
     height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background-image: url('wheel_transparent.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
     flex-shrink: 0;
-  }
-  .cookie-jar img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
   }
   .jar-fill{
     display: flex;
@@ -87,7 +154,19 @@
 
     /* controls */
     .controls{display:flex;flex-direction:column;gap:12px;align-items:center}
-    .spin-btn{background:linear-gradient(180deg,#ffb84d,#ff8a3d);border:0;padding:14px 22px;border-radius:12px;font-weight:800;color:#2b160d;cursor:pointer;box-shadow:0 10px 30px rgba(255,136,61,0.16);}
+    /* .spin-btn{background:linear-gradient(180deg,#ffb84d,#ff8a3d);border:0;padding:14px 22px;border-radius:12px;font-weight:800;color:#2b160d;cursor:pointer;box-shadow:0 10px 30px rgba(255,136,61,0.16);} */
+    .spin-btn {
+  background: linear-gradient(180deg, #ffb84d, #ff8a3d);
+  border: 0;
+  padding: 22px 40px; /* Much larger padding */
+  border-radius: 20px; /* More rounded */
+  font-weight: 900; /* Bolder text */
+  color: #2b160d;
+  cursor: pointer;
+  box-shadow: 0 12px 40px rgba(255, 136, 61, 0.3); /* Enhanced shadow */
+  font-size: 20px; /* Larger text */
+  letter-spacing: 1px; /* Spaced out text */
+}
     .hint{color:var(--muted);font-size:14px}
 
 
@@ -118,7 +197,7 @@
     <div class="main">
       <div class="wheel-column">
         <div class="wheel-area">
-          <div id="pointer" class="pointer"></div>
+          <div id="pointer" class="pointer" aria-hidden="true"></div>
           <div id="wheel" class="wheel" role="application" aria-label="Trick or Treat Wheel">
             <div class="hub">TRICK<br/>TREAT</div>
             <!-- slice labels will be inserted by JS into correct positions -->
@@ -136,7 +215,7 @@
 
   </div>
 
-  <div id="modal" class="modal" role="dialog">
+  <div id="modal" class="modal" role="dialog" aria-hidden="true">
     <div class="modal-card">
       <div style="font-size:18px;color:#ffdca8;font-weight:800">Congratulations!</div>
       <div id="modal-msg" style="margin-top:8px;font-size:20px;font-weight:700">You won 0 candies</div>
@@ -159,15 +238,21 @@
 
     // define slices: each has count and an image (we'll use emoji converted to data URI)
     const slices = [
-      {count:1, icon:'🍬'},
-      {count:2, icon:'🍭'},
-      {count:3, icon:'🍫'},
-      {count:4, icon:'🍪'},
-      {count:5, icon:'🍬'}
+      {count:1, icon:'🍬'}, // 0-72 degrees
+      {count:2, icon:'🍭'}, // 72-144 degrees
+      {count:3, icon:'🍫'}, // 144-216 degrees
+      {count:4, icon:'🍪'}, // 216-288 degrees
+      {count:5, icon:'🍬'}  // 288-360 degrees
     ];
 
     let spinning = false;
     let currentRotation = 0;
+    
+    // Convert result number (1-5) to the correct rotation angle
+    function getAngleForResult(result) {
+      // Map result directly to the angle needed
+      return (result - 1) * sectorAngle;
+    }
 
     // Helper: create a label element for a slice showing a cookie jar with candies
     function makeLabel(i){
@@ -180,12 +265,6 @@
       // Create div for the wheel image
       const jar = document.createElement('div');
       jar.className = 'cookie-jar';
-      
-      // Add image element instead of using background-image
-      const img = document.createElement('img');
-      img.src = 'wheel_transparent.png';
-      img.alt = 'Candy jar';
-      jar.appendChild(img);
 
       const fill = document.createElement('div');
       fill.className = 'jar-fill';
@@ -213,13 +292,14 @@
       const labels = [];
       // ensure labels exist
       if(!wheel.querySelector('.slice-label')){
-        for(let i=0;i<sectors;i++) makeLabel(i);
+        // Create labels in order
+        for(let i=0; i < sectors; i++) makeLabel(i);
       }
       wheel.querySelectorAll('.slice-label').forEach(lbl=>{
-        const v = Number(lbl.dataset.value) - 1;
-        const angleDeg = (v * sectorAngle) + sectorAngle/2; // center of slice
-        // convert to CSS rotation: rotate around wheel center, then push outward
-        const angle = angleDeg - 90; // make 0 at top
+        const v = Number(lbl.dataset.value);
+        // Position labels with first (5) at top, rotating clockwise
+        const angleDeg = (v - 1) * sectorAngle + sectorAngle/2;
+        const angle = angleDeg;
         lbl.style.transform = `translate(-50%,-50%) rotate(${angle}deg) translateY(-${radius}px) rotate(${-angle}deg)`;
         // ensure bubble size fits within arc
         const arc = 2 * Math.PI * radius * (sectorAngle/360);
@@ -235,78 +315,152 @@
 
     // pointer position: centered at top of wheel pointing down like elevator key
     // Use pointerYOffset to nudge the pointer up/down for visual alignment (negative = up)
-    const pointerYOffset = -8; // tweak this value (px) if you want the tip closer/further from rim
     function positionPointer(){
       const rect = wheel.getBoundingClientRect();
       const wrap = wheel.parentElement.getBoundingClientRect();
       const cx = (rect.left - wrap.left) + rect.width/2;
       pointer.style.left = cx + 'px';
-      pointer.style.top = (rect.top - wrap.top + pointerYOffset) + 'px';
     }
 
     // equal probability spin: pick random slice 1..5 uniformly
     function pickRandom(){ return Math.floor(Math.random()*sectors) + 1 }
 
-    function doSpin(result, extraSpins){
+    function doSpin(options = {}){
       if(spinning) return;
       spinning = true;
       spinBtn.disabled = true;
       status.textContent = 'Spinning...';
-      // compute center angle for the slice (0-based)
-      const centerAngle = (result - 1) * sectorAngle + sectorAngle/2;
-      // pointer sits at 180deg; compute offset to bring centerAngle to 180
-      const desired = 180;
-      let offset = desired - centerAngle;
-      offset = ((offset % 360) + 360) % 360;
-      const spins = extraSpins || (Math.floor(Math.random()*3) + 4); // 4..6
-      const target = spins*360 + offset;
-      currentRotation += target;
-      wheel.style.transition = 'transform 3.6s cubic-bezier(.2,.9,.25,1)';
-      wheel.style.transform = `rotate(${currentRotation}deg)`;
-      wheel.dataset.result = result;
+      
+      let spins, duration;
+      
+      if (options.isSwipe) {
+        // For swipes, use the actual velocity to determine spins and duration
+        spins = 2 + Math.floor(options.force * 8); // Force is normalized velocity
+        duration = 2 + (options.force * 4); // Longer swipes spin longer
+      } else {
+        // For button clicks, use completely random values
+        spins = 3 + Math.floor(Math.random() * 8); // 3 to 10 spins
+        duration = 2 + Math.random() * 4; // 2 to 6 seconds
+      }
+      
+      const additionalSpins = spins * 360;
+      
+      // Add random angle to land on any position
+      const randomAngle = Math.random() * 360;
+      
+      // Calculate final angle including random position
+      const finalAngle = currentRotation + additionalSpins + randomAngle;
+      
+      currentRotation = finalAngle;
+      wheel.style.transition = `transform ${duration}s cubic-bezier(.2,.9,.15,1)`;
+      wheel.style.transform = `rotate(${finalAngle}deg)`;
     }
 
     // show result modal
     function showResult(n){
-      modalMsg.textContent = `You won ${n} ${n===1? 'candy' : 'candies'}!`;
-      modal.classList.add('show');
-      modal.setAttribute('aria-hidden','false');
-      status.textContent = `You got ${n}`;
-      spinning = false;
-      spinBtn.disabled = false;
+      // Add a small delay before showing the result
+      setTimeout(() => {
+        modalMsg.textContent = `You won ${n} ${n===1? 'candy' : 'candies'}!`;
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden','false');
+        status.textContent = `You got ${n}`;
+        spinning = false;
+        spinBtn.disabled = false;
+      }, 1000); // 1 second delay
+    }
+
+    // Clear winner highlight from all slices
+    function clearWinnerHighlight() {
+      wheel.querySelectorAll('.slice-label').forEach(label => {
+        label.classList.remove('winner');
+      });
+    }
+
+    // Calculate which slice is at the pointer (top) based on current wheel rotation
+    function getWinningSlice() {
+      // Get current rotation normalized to 0-360 degrees
+      let rotation = -currentRotation % 360; // Negative because we're rotating clockwise
+      if (rotation < 0) rotation += 360;
+      
+      // Calculate which sector the pointer is in
+      const sectorIndex = Math.floor(rotation / sectorAngle);
+      
+      // Map sector index to slice number (1-5)
+      return sectorIndex + 1;
     }
 
     // after wheel transition end, reveal result
     wheel.addEventListener('transitionend', (ev)=>{
       if(ev.propertyName !== 'transform') return;
-      const r = Number(wheel.dataset.result || 0);
-      if(r >=1 && r <= sectors) setTimeout(()=> showResult(r), 180);
+      
+      // Calculate the actual winning slice based on final wheel position
+      const winningNumber = getWinningSlice();
+      
+      // Clear any previous winner
+      clearWinnerHighlight();
+      
+      // Find and highlight the winning slice
+      const winningLabel = wheel.querySelector(`.slice-label[data-value="${winningNumber}"]`);
+      if (winningLabel) {
+        winningLabel.classList.add('winner');
+      }
+      
+      // Show the result after a brief delay
+      setTimeout(()=> showResult(winningNumber), 180);
     });
 
-    // click button triggers a fair spin
-    spinBtn.addEventListener('click', ()=>{ const r = pickRandom(); doSpin(r); });
+    // click button triggers a completely random spin
+    spinBtn.addEventListener('click', ()=>{ 
+      clearWinnerHighlight(); // Clear previous winner
+      doSpin({ isSwipe: false });
+    });
 
-    okBtn.addEventListener('click', ()=>{ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); });
+    okBtn.addEventListener('click', ()=>{ 
+      modal.classList.remove('show'); 
+      modal.setAttribute('aria-hidden','true');
+    });
 
     // Swipe / drag support: we accept a flick to trigger a spin
-    let pointerDown = false; let startY=0, startX=0, startTime=0;
+    let pointerDown = false; let startY=0, startX=0, startTime=0, lastX=0, lastTime=0, maxVelocity = 0;
     wheel.addEventListener('pointerdown', (e)=>{
-      if(spinning) return; pointerDown=true; startX=e.clientX; startY=e.clientY; startTime=Date.now(); wheel.setPointerCapture(e.pointerId);
+      if(spinning) return;
+      pointerDown = true;
+      startX = lastX = e.clientX;
+      startY = e.clientY;
+      startTime = lastTime = Date.now();
+      maxVelocity = 0;
+      wheel.setPointerCapture(e.pointerId);
       // stop any transition so user can drag
       wheel.style.transition = 'none';
     });
     wheel.addEventListener('pointermove',(e)=>{
-      if(!pointerDown) return; const dx = e.clientX - startX; const dy = e.clientY - startY; // gentle rotate while dragging
-      const rot = dx * 0.3; wheel.style.transform = `rotate(${currentRotation + rot}deg)`;
+      if(!pointerDown) return;
+      const dx = e.clientX - startX;
+      // Track instantaneous velocity
+      const now = Date.now();
+      const dt = now - lastTime;
+      if(dt > 0) {
+        const instantVelocity = Math.abs((e.clientX - lastX) / dt);
+        maxVelocity = Math.max(maxVelocity, instantVelocity);
+        // Add some "momentum" effect during drag
+        const momentum = Math.min(0.3 + instantVelocity * 0.1, 0.8);
+        const rot = dx * momentum;
+        wheel.style.transform = `rotate(${currentRotation + rot}deg)`;
+      }
+      lastX = e.clientX;
+      lastTime = now;
     });
     wheel.addEventListener('pointerup',(e)=>{
-      if(!pointerDown) return; pointerDown=false; const dx = e.clientX - startX; const dt = Math.max(16, Date.now()-startTime);
-      const velocity = dx / dt; // px per ms
-      // treat any significant flick as a spin; still pick random result fairly
-      const flickStrength = Math.min(Math.abs(velocity)*200, 1800);
-      const spins = Math.floor(2 + Math.abs(velocity)*5);
-      const r = pickRandom();
-      doSpin(r, spins + 3);
+      if(!pointerDown) return;
+      pointerDown = false;
+      
+      // Use the maximum velocity achieved during the swipe
+      const normalizedForce = Math.min(maxVelocity / 2, 1); // Normalize to 0-1
+      
+      doSpin({ 
+        isSwipe: true,
+        force: normalizedForce
+      });
     });
 
     // Initial layout
